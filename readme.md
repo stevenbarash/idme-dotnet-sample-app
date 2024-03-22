@@ -14,9 +14,9 @@ Sample app for an ID.me OAuth integration
 1. Clone the repository.
 2. Open the solution in Visual Studio [Code].
 3. Rename appsettings copy.json to appsettings.json
-   a. Input Client ID/Client Secret from ID.me Developer Portal
-4. Restore NuGet packages.
-5. Build the solution.
+4. Input Client ID/Client Secret from ID.me Developer Portal into appsettings.json
+5. Restore NuGet packages.
+6. Build the solution.
 
 ## Usage
 
