@@ -1,0 +1,16 @@
+﻿@{
+    var claims = ViewBag.Claims as List<dynamic>;
+}
+
+@if (ViewBag.Claims != null)
+{
+    <h2>You are authenticated</h2>
+}
+else{
+    <h2>You are not authenticated</h2>
+    
+    <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
+        <img src="https://developers.id.me/assets/buttons/rectangle-solid-sign-c1d3504ddef6e9f65531da61fb31addb58d43af739b4e735ece4d1a25667258b.svg" alt="Sign in" style="height: 50px;">
+    </a>
+
+}
