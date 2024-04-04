@@ -32,11 +32,12 @@ builder.Services.AddAuthentication(options =>
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
+    // options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
+    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
+
     options.ClaimActions.MapJsonKey("Social Security", "social");
     options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.PostalCode, "zip");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.StateOrProvince, "state");
@@ -46,6 +47,7 @@ builder.Services.AddAuthentication(options =>
     {
         OnCreatingTicket = async context =>
         {
+            // Send a request to the user information endpoint to retrieve user data
             var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
             request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
@@ -53,21 +55,23 @@ builder.Services.AddAuthentication(options =>
             var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
             response.EnsureSuccessStatusCode();
 
+            // Parse the response JSON and extract the user data
             var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             var user = json.RootElement;
 
             var token = user.GetString();
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var securityToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+            var jwt = tokenHandler.ReadJwtToken(token);
 
-            var payload = securityToken?.Payload;
+            var payload = jwt?.Payload;
 
             var userClaims = new Dictionary<string, object>();
 
-            if (securityToken != null)
+            if (userClaims != null)
             {
-                foreach (var claim in securityToken.Claims)
+                // Map the JWT claims to user claims dictionary
+                foreach (var claim in jwt.Claims)
                 {
                     userClaims.Add(claim.Type, claim.Value);
                 }
@@ -75,6 +79,7 @@ builder.Services.AddAuthentication(options =>
 
             var userClaimsJson = JsonDocument.Parse(JsonSerializer.Serialize(userClaims)).RootElement;
 
+            // Run the claim actions to add the user claims to the authentication ticket
             context.RunClaimActions(userClaimsJson);
         }
     };
