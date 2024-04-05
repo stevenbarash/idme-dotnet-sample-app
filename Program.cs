@@ -2,14 +2,18 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -18,73 +22,87 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = "IDme";
 })
 .AddCookie()
-.AddOAuth("IDme", options =>
-{
-    options.AuthorizationEndpoint = "https://api.idmelabs.com/oauth/authorize";
-    options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
-    options.CallbackPath = new PathString("/authorization-code/callback");
-    options.ClientId = builder.Configuration?.GetValue<string>("IDme:ClientId");
-    options.ClientSecret = builder.Configuration?.GetValue<string>("IDme:ClientSecret");
-    options.TokenEndpoint = "https://api.idmelabs.com/oauth/token";
-    options.UserInformationEndpoint = "https://api.idmelabs.com/api/public/v3/userinfo";
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Expiration, "exp");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
-    // options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
-
-    options.ClaimActions.MapJsonKey("Social Security", "social");
-    options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.PostalCode, "zip");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.StateOrProvince, "state");
-    options.ClaimActions.MapJsonKey("uuid", "uuid");
-
-    options.Events = new OAuthEvents
-    {
-        OnCreatingTicket = async context =>
+.AddOpenIdConnect("IDme", options =>
         {
-            // Send a request to the user information endpoint to retrieve user data
-            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-            request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+            options.Authority = "https://api.idmelabs.com/oidc"; // The OIDC authority
+            options.ClientId = builder.Configuration?.GetValue<string>("IDme:ClientId");
+            options.ClientSecret = builder.Configuration?.GetValue<string>("IDme:ClientSecret");
+            options.ResponseType = "code";
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.SaveTokens = true;
+            options.Scope.Clear();
+            options.Scope.Add("openid");
+            // options.Scope.Add("profile");
+            options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
 
-            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-            response.EnsureSuccessStatusCode();
+            options.CallbackPath = new PathString("/authorization-code/callback");
 
-            // Parse the response JSON and extract the user data
-            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            var user = json.RootElement;
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Expiration, "exp");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
 
-            var token = user.GetString();
+            options.ClaimActions.MapJsonKey("Social Security", "social");
+            options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.PostalCode, "zip");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.StateOrProvince, "state");
+            options.ClaimActions.MapJsonKey("uuid", "uuid");
+            // options.Authority = "https://api.idmelabs.com"; // The OIDC authority
+            // options.ClientId = builder.Configuration?.GetValue<string>("IDme:ClientId");
+            // options.ClientSecret = builder.Configuration?.GetValue<string>("IDme:ClientSecret");
+            // options.ResponseType = "code";
+            // options.GetClaimsFromUserInfoEndpoint = true;
+            // options.SaveTokens = true;
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwt = tokenHandler.ReadJwtToken(token);
+            options.Scope.Clear();
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
 
-            var payload = jwt?.Payload;
+            options.CallbackPath = new PathString("/authorization-code/callback");
 
-            var userClaims = new Dictionary<string, object>();
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Expiration, "exp");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
 
-            if (userClaims != null)
+            options.ClaimActions.MapJsonKey("Social Security", "social");
+            options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.PostalCode, "zip");
+            options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.StateOrProvince, "state");
+            options.ClaimActions.MapJsonKey("uuid", "uuid");
+            options.Events = new OpenIdConnectEvents
             {
-                // Map the JWT claims to user claims dictionary
-                foreach (var claim in jwt.Claims)
+                OnTokenValidated = async context =>
                 {
-                    userClaims.Add(claim.Type, claim.Value);
+                    var identity = context.Principal.Identity as ClaimsIdentity;
+                    if (identity != null)
+                    {
+                        var userClaims = new Dictionary<string, object>();
+                        // Map the JWT claims to user claims dictionary
+                        foreach (var claim in context.Principal.Claims)
+                        {
+                            userClaims.Add(claim.Type, claim.Value);
+                        }
+
+                        // Add the user claims to the ClaimsIdentity
+                        foreach (var claim in userClaims)
+                        {
+                            identity.AddClaim(new Claim(claim.Key, claim.Value.ToString()));
+                        }
+                    }
                 }
-            }
-
-            var userClaimsJson = JsonDocument.Parse(JsonSerializer.Serialize(userClaims)).RootElement;
-
-            // Run the claim actions to add the user claims to the authentication ticket
-            context.RunClaimActions(userClaimsJson);
+            };
         }
-    };
-});
-
+);
 builder.Services.AddMvc();
 
 var app = builder.Build();
