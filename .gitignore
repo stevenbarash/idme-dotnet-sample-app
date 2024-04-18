@@ -34,4 +34,4 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 
 # Config file
-appsettings.json
+# appsettings.json
