@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
+// ReSharper disable once RedundantUsingDirective
 using Newtonsoft.Json.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,22 +21,24 @@ builder.Services.AddAuthentication(options =>
 .AddCookie()
 .AddOAuth("IDme", options =>
 {
-    options.AuthorizationEndpoint = "https://api.idmelabs.com/oauth/authorize";
-    options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
-    options.CallbackPath = new PathString("/authorization-code/callback");
+    //Set up endpoints and credentials
     options.ClientId = builder.Configuration?.GetValue<string>("IDme:ClientId");
     options.ClientSecret = builder.Configuration?.GetValue<string>("IDme:ClientSecret");
     options.TokenEndpoint = "https://api.idmelabs.com/oauth/token";
     options.UserInformationEndpoint = "https://api.idmelabs.com/api/public/v3/userinfo";
+    options.AuthorizationEndpoint = "https://api.idmelabs.com/oauth/authorize";
+    options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
+    options.CallbackPath = new PathString("/authorization-code/callback");
+
+    // Map claims
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Expiration, "exp");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
-    // options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
+    // options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
+    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
-
     options.ClaimActions.MapJsonKey("Social Security", "social");
     options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
     options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
@@ -68,13 +71,10 @@ builder.Services.AddAuthentication(options =>
 
             var userClaims = new Dictionary<string, object>();
 
-            if (userClaims != null)
+            // Map the JWT claims to user claims dictionary
+            foreach (var claim in jwt.Claims)
             {
-                // Map the JWT claims to user claims dictionary
-                foreach (var claim in jwt.Claims)
-                {
-                    userClaims.Add(claim.Type, claim.Value);
-                }
+                userClaims.Add(claim.Type, claim.Value);
             }
 
             var userClaimsJson = JsonDocument.Parse(JsonSerializer.Serialize(userClaims)).RootElement;

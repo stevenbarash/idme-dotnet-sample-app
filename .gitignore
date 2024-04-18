@@ -1,6 +1,4 @@
 # ASP.NET
-*.sln
-*.csproj
 *.user
 *.vs
 bin/

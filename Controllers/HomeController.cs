@@ -4,18 +4,19 @@ using idme_dotnet_sample_app.Models;
 
 namespace idme_dotnet_sample_app.Controllers;
 
+/// <summary>
+/// The HomeController class inherits from the Controller base class and represents a controller for the application home pages.
+/// </summary>
+/// <remarks>
+/// The HomeController has methods to handle requests, actions, and processes that pertain to the application's home pages.
+/// </remarks>
+
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="HomeController"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
 
     /// <summary>
     /// Action method for the home page.
@@ -23,12 +24,13 @@ public class HomeController : Controller
     /// <returns>The view result.</returns>
     public IActionResult Index()
     {
-        if (HttpContext.User.Identity.IsAuthenticated)
+        if (HttpContext.User.Identity is { IsAuthenticated: true })
         {
             Console.WriteLine("User is authenticated");
 
             var claims = HttpContext.User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             ViewBag.Claims = claims;
+            ViewBag.Token = HttpContext.Request.Headers["Authorization"];
         }
         else
         {
@@ -41,10 +43,10 @@ public class HomeController : Controller
     /// Action method for the privacy page.
     /// </summary>
     /// <returns>The view result.</returns>
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+//    public IActionResult Privacy()
+//    {
+//        return View();
+//    }
 
     /// <summary>
     /// Action method for handling errors.

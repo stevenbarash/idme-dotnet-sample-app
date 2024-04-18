@@ -16,6 +16,7 @@ namespace idme_dotnet_sample_app.Controllers
 
                 Console.WriteLine("User is INDEED authenticated");
 
+                // ReSharper disable once InvalidXmlDocComment
                 /// <summary>
                 /// Retrieves the claims from the current user and strips the URL to make the claim more readable.
                 /// </summary>
