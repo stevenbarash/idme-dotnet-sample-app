@@ -1,6 +1,6 @@
 # ID.me .NET Sample App
 
-Sample app for an ID.me OAuth integration 
+Sample app for an ID.me OIDC integration 
 ## Table of Contents
 
 - [ID.me .NET Sample App](#idme-net-sample-app)
@@ -15,8 +15,9 @@ Sample app for an ID.me OAuth integration
 2. Open the solution in Visual Studio [Code].
 3. Rename appsettings copy.json to appsettings.json
 4. Input Client ID/Client Secret from ID.me Developer Portal into appsettings.json
-5. Restore NuGet packages.
-6. Build the solution.
+5. Ensure "http://localhost:5030/authorization-code/callback" is in your Consumer's list of Redirect URI
+6. Restore NuGet packages.
+7. Build the solution.
 
 ## Usage
 
