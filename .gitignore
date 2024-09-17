@@ -35,3 +35,4 @@ UpgradeLog*.htm
 
 # Config file
 appsettings.json
+.vscode/

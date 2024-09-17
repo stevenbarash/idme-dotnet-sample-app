@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
 
 namespace idme_dotnet_sample_app.Controllers
@@ -22,9 +23,13 @@ namespace idme_dotnet_sample_app.Controllers
 
         public async Task<IActionResult> Logout()
         {
+            // Sign out of the application
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Sign out of the OIDC provider
+            await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
 
-            return View();
+            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult AccessDenied()

@@ -2,15 +2,24 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
-// ReSharper disable once RedundantUsingDirective
-using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols;
+using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
+
+// Enable PII logging (only for development, remove in production)
+if (builder.Environment.IsDevelopment())
+{
+    IdentityModelEventSource.ShowPII = true;
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -19,71 +28,82 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = "IDme";
 })
 .AddCookie()
-.AddOAuth("IDme", options =>
+.AddOpenIdConnect("IDme", options =>
 {
-    //Set up endpoints and credentials
-    options.ClientId = builder.Configuration?.GetValue<string>("IDme:ClientId");
-    options.ClientSecret = builder.Configuration?.GetValue<string>("IDme:ClientSecret");
-    options.TokenEndpoint = "https://api.idmelabs.com/oauth/token";
-    options.UserInformationEndpoint = "https://api.idmelabs.com/api/public/v3/userinfo";
-    options.AuthorizationEndpoint = "https://api.idmelabs.com/oauth/authorize";
-    options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
+    options.ClientId = builder.Configuration["IDme:ClientId"];
+    options.ClientSecret = builder.Configuration["IDme:ClientSecret"];
+
+    options.Authority = "https://api.idmelabs.com/oidc";
+
+    // Set the custom endpoints and JWKS URI
+    options.Configuration = new OpenIdConnectConfiguration
+    {
+        AuthorizationEndpoint = "https://api.idmelabs.com/oauth/authorize",
+        TokenEndpoint = "https://api.idmelabs.com/oauth/token",
+        UserInfoEndpoint = "https://api.idmelabs.com/api/public/v3/userinfo",
+        JwksUri = "https://api.idmelabs.com/oidc/.well-known/jwks"
+    };
+
+    // Implement custom ConfigurationManager
+    var httpClient = new HttpClient(new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    });
+    options.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+        "https://api.idmelabs.com/oidc/.well-known/openid-configuration",
+        new OpenIdConnectConfigurationRetriever(),
+        new HttpDocumentRetriever(httpClient)
+    );
+
+    options.ResponseType = OpenIdConnectResponseType.Code;
     options.CallbackPath = new PathString("/authorization-code/callback");
 
-    // Map claims
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.NameIdentifier, "sub");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Expiration, "exp");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.DateOfBirth, "birth_date");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Locality, "city");
-    // options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "emails_confirmed");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Email, "email");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.GivenName, "fname");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.Surname, "lname");
-    options.ClaimActions.MapJsonKey("Social Security", "social");
-    options.ClaimActions.MapJsonKey("identity_document_number", "identity_document_number");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.MobilePhone, "phone");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.PostalCode, "zip");
-    options.ClaimActions.MapJsonKey(System.Security.Claims.ClaimTypes.StateOrProvince, "state");
-    options.ClaimActions.MapJsonKey("uuid", "uuid");
+    options.Scope.Clear();
+    options.Scope.Add("openid");
+    options.Scope.Add("http://idmanagement.gov/ns/assurance/ial/2/aal/2");
 
-    options.Events = new OAuthEvents
+    // Configure token validation parameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        OnCreatingTicket = async context =>
+        ValidateIssuer = true,
+        ValidIssuer = "https://api.idmelabs.com/oidc",
+        ValidateAudience = true,
+        ValidAudience = options.ClientId,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+
+    // Add event handlers for debugging
+    options.Events = new OpenIdConnectEvents
+    {
+        OnTokenValidated = context =>
         {
-            // Send a request to the user information endpoint to retrieve user data
-            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-            request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-            response.EnsureSuccessStatusCode();
-
-            // Parse the response JSON and extract the user data
-            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            var user = json.RootElement;
-
-            var token = user.GetString();
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwt = tokenHandler.ReadJwtToken(token);
-
-            var payload = jwt?.Payload;
-
-            var userClaims = new Dictionary<string, object>();
-
-            // Map the JWT claims to user claims dictionary
-            foreach (var claim in jwt.Claims)
-            {
-                userClaims.Add(claim.Type, claim.Value);
-            }
-
-            var userClaimsJson = JsonDocument.Parse(JsonSerializer.Serialize(userClaims)).RootElement;
-
-            // Run the claim actions to add the user claims to the authentication ticket
-            context.RunClaimActions(userClaimsJson);
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Token validated successfully");
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError($"Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
         }
     };
+
+    // Enable logging for the backchannel
+    options.BackchannelHttpHandler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+
+    // Disable HTTPS requirement for development (remove in production)
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
 });
+
+// Add logging
+builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddMvc();
 

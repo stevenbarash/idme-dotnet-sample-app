@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using idme_dotnet_sample_app.Models;
+using Microsoft.AspNetCore.Authentication;
 
 namespace idme_dotnet_sample_app.Controllers;
 
@@ -22,7 +23,7 @@ public class HomeController : Controller
     /// Action method for the home page.
     /// </summary>
     /// <returns>The view result.</returns>
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (HttpContext.User.Identity is { IsAuthenticated: true })
         {
@@ -30,7 +31,10 @@ public class HomeController : Controller
 
             var claims = HttpContext.User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             ViewBag.Claims = claims;
-            ViewBag.Token = HttpContext.Request.Headers["Authorization"];
+            
+            // Retrieve the access token
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            ViewBag.AccessToken = accessToken;
         }
         else
         {
