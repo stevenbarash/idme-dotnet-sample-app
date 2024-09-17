@@ -23,13 +23,14 @@ namespace idme_dotnet_sample_app.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            // Sign out of the application
+            // Sign out of the cookie authentication
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
-            // Sign out of the OIDC provider
-            await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
-
-            return RedirectToAction("Index", "Home");
+            // Sign out of the ID.me OpenID Connect authentication
+            return SignOut(
+                new AuthenticationProperties { RedirectUri = Url.Action("Index", "Home") },
+                "IDme"
+            );
         }
 
         public IActionResult AccessDenied()

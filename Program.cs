@@ -87,7 +87,15 @@ builder.Services.AddAuthentication(options =>
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             logger.LogError($"Authentication failed: {context.Exception.Message}");
             return Task.CompletedTask;
-        }
+        },
+        OnRedirectToIdentityProviderForSignOut = context =>
+{
+    var logoutUri = "/";
+    context.Response.Redirect(logoutUri);
+    context.HandleResponse();
+    return Task.CompletedTask;
+}
+
     };
 
     // Enable logging for the backchannel
