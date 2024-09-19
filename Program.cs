@@ -30,10 +30,8 @@ builder.Services.AddAuthentication(options =>
 .AddCookie()
 .AddOpenIdConnect("IDme", options =>
 {
-    // Read environment variables
-    var clientId = Environment.GetEnvironmentVariable("IDME_CLIENT_ID");
-    var clientSecret = Environment.GetEnvironmentVariable("IDME_CLIENT_SECRET");
-
+    options.ClientId = builder.Configuration["IDme:ClientId"];
+    options.ClientSecret = builder.Configuration["IDme:ClientSecret"];
 
     options.Authority = "https://api.idmelabs.com/oidc";
 
