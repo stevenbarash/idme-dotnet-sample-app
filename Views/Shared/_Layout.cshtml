@@ -1,83 +1,173 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>@ViewData["Title"] - Agency Self Service Demo</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --header-padding: 2rem;
+            --container-padding: 2rem;
+            --footer-padding: 2rem;
+            --nav-display: inline;
+        }
 
-    <environment include="Development">
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
-                <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-            asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-fallback-test-class="sr-only"
-            asp-fallback-test-property="position" asp-fallback-test-value="absolute" crossorigin="anonymous"
-            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
+        /* Base styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
 
-    </environment>
-    <environment exclude="Development">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-            asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-fallback-test-class="sr-only"
-            asp-fallback-test-property="position" asp-fallback-test-value="absolute" crossorigin="anonymous"
-            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
-    </environment>
-    <link rel="stylesheet" href="~/css/site.css" />
+        /* Header styles */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        header nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 1rem 0 0;
+        }
+
+        header nav ul li {
+            display: inline;
+            margin-right: 1rem;
+        }
+
+        header nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        header nav ul li a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main content styles */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--container-padding);
+        }
+
+        main {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Footer styles */
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: var(--footer-padding);
+            margin-top: 2rem;
+        }
+
+        footer p {
+            margin: 0 0 1rem;
+        }
+
+        footer nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        footer nav ul li {
+            display: inline;
+            margin-right: 1rem;
+        }
+
+        footer nav ul li a {
+            text-decoration: none;
+        }
+
+        footer .legal {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive design */
+    </style>
 </head>
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img style="height: 50px" src="~/img/logo.png" alt="Logo">
-                </a>                
-                
-                <div class="d-sm-inline-flex">
-                    <ul class="navbar-nav">
-                        @if (User?.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Profile" asp-action="Index">Profile</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Sign out</a>
-                            </li>
-
-
-                        }
-                    </ul>
-                </div>
-            </div>
+        <h1>ID.me OIDC + .NET Demo App</h1>
+        <nav>
+            <ul>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <li><a asp-controller="Profile" asp-action="Index">Profile</a></li>
+                    <li><a asp-controller="Account" asp-action="Logout">Logout</a></li>
+                }
+                else
+                {
+                    <li><a asp-controller="Account" asp-action="Login">Login</a></li>
+                }
+            </ul>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-        </div>
+    <footer>
+        <p>Demo Agency Name</p>
+        <nav>
+            <ul>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
+        </nav>
+        <nav class="legal">
+            <ul>
+                <li><a href="#">Policies</a></li>
+                <li><a href="#">Security</a></li>
+                <li><a href="#">Disclaimer</a></li>
+                <li><a href="#">Accessibility</a></li>
+            </ul>
+        </nav>
     </footer>
 
-    <environment include="Development">
-        <script src="~/lib/jquery/dist/jquery.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.js"></script>
-    </environment>
-    <environment exclude="Development">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
-            asp-fallback-src="~/lib/jquery/dist/jquery.min.js" asp-fallback-test="window.jQuery" crossorigin="anonymous"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=">
-            </script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"
-            asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
-            asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal" crossorigin="anonymous"
-            integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o">
-            </script>
-    </environment>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function updateResponsiveVars() {
+            const root = document.documentElement;
+            if (window.innerWidth <= 768) {
+                root.style.setProperty('--header-padding', '1rem');
+                root.style.setProperty('--container-padding', '1rem');
+                root.style.setProperty('--footer-padding', '1rem');
+                root.style.setProperty('--nav-display', 'block');
+            } else {
+                root.style.setProperty('--header-padding', '2rem');
+                root.style.setProperty('--container-padding', '2rem');
+                root.style.setProperty('--footer-padding', '2rem');
+                root.style.setProperty('--nav-display', 'inline');
+            }
+        }
 
-    @RenderSection("Scripts", required: false)
+        window.addEventListener('resize', updateResponsiveVars);
+        updateResponsiveVars(); // Call once on load
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>

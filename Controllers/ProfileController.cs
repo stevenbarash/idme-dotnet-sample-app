@@ -1,7 +1,7 @@
-using System;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using idme_dotnet_sample_app.Models;
+using System.Security.Claims;
 
 namespace idme_dotnet_sample_app.Controllers
 {
@@ -10,23 +10,19 @@ namespace idme_dotnet_sample_app.Controllers
     {
         public IActionResult Index()
         {
-            if (HttpContext.User?.Identity?.IsAuthenticated == true)
+            var userClaims = new UserClaims
             {
-                Console.WriteLine("User is authenticated");
-
-                var claims = HttpContext.User.Claims.Select(c => new
-                {
-                    Type = c.Type.Split('/').Last().Split('\\').Last(),
-                    c.Value
-                }).ToList();
-                ViewBag.Claims = claims;
-            }
-            else
-            {
-                Console.WriteLine("User is not authenticated");
-            }
-
-            return View();
+                GivenName = User.FindFirst(ClaimTypes.GivenName)?.Value,
+                Surname = User.FindFirst(ClaimTypes.Surname)?.Value,
+                SocialSecurity = User.FindFirst("social_security_number")?.Value,
+                IdentityDocumentNumber = User.FindFirst("identity_document_number")?.Value,
+                MobilePhone = User.FindFirst(ClaimTypes.MobilePhone)?.Value,
+                PostalCode = User.FindFirst(ClaimTypes.PostalCode)?.Value,
+                StateOrProvince = User.FindFirst(ClaimTypes.StateOrProvince)?.Value,
+                Uuid = User.FindFirst("uuid")?.Value
+            };
+            
+            return View(userClaims);
         }
     }
 }

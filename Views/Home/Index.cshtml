@@ -1,20 +1,112 @@
 ﻿@{
-    var claims = ViewBag.Claims as List<dynamic>;
-        var token = ViewBag.Token;
-    }
-
-    @if (ViewBag.Claims != null)
-{
-    <h2>You are authenticated</h2>
-    <span>@token</span>
-
+    ViewData["Title"] = "Agency Self Service Demo";
 }
-else{
-    <h2>You are not authenticated</h2>
-    
-    <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
-        <img src="https://developers.id.me/assets/buttons/rectangle-solid-sign-c1d3504ddef6e9f65531da61fb31addb58d43af739b4e735ece4d1a25667258b.svg" alt="Sign in" style="height: 50px;">
-    </a>
 
-}
-    
+<main>
+    <section class="info-box">
+        <p>Welcome to the Agency Self Service Demo application. This demonstration showcases how an agency might implement secure identity verification and account management using ID.me's digital identity network.</p>
+        <p>In this demo, we simulate the use of ID.me for both Authentication Assurance Level 2 (AAL2) and Identity Assurance Level 2 (IAL2):</p>
+        <ul>
+            <li><strong>AAL2 Authentication:</strong> Provides high confidence that the user controls an authenticator bound to the subscriber's account. It requires either multi-factor authentication or a combination of two single-factor authenticators.</li>
+            <li><strong>IAL2 Verification:</strong> Provides a high level of confidence in the asserted identity's validity. It involves rigorous identity proofing processes, including verification of government-issued ID and biometric comparison.</li>
+        </ul>
+        <p>While this demo doesn't actually perform these verifications, in a real application, these measures would ensure a high level of security and identity assurance for accessing sensitive information or performing critical transactions.</p>
+    </section>
+    <section class="registration-box">
+        <h2>Demo - Identity Validation</h2>
+        <p>To simulate changing your bank details, you need to complete a mock AAL2 authentication and IAL2 verification with ID.me.</p>
+        @if (ViewBag.Claims == null)
+        {
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
+                <img src="https://developers.id.me/assets/buttons/rectangle-solid-sign-c1d3504ddef6e9f65531da61fb31addb58d43af739b4e735ece4d1a25667258b.svg" alt="Sign in" style="height: 50px;">
+            </a>
+        }
+        else
+        {
+            <h2>You are authenticated</h2>
+            <span>@ViewBag.Token</span>
+        }
+        <div class="faq">
+            <details>
+                <summary>What is ID.me?</summary>
+                <p>ID.me is a digital identity network that helps people prove their identity online. It's similar to a physical ID card, but for the internet. As a portable credential, ID.me allows you to verify your identity once and then use that verified identity across multiple platforms and services.</p>
+                <p>Key features of ID.me include:</p>
+                <ul>
+                    <li>Secure identity verification to access sensitive information and perform important transactions online</li>
+                    <li>Portability across different government agencies and private sector services</li>
+                    <li>Compliance with federal identity, credential, and access management (ICAM) standards</li>
+                    <li>Protection of personal information through encryption and secure data practices</li>
+                </ul>
+            </details>
+            <details>
+                <summary>How do I verify my identity with ID.me?</summary>
+                <p>ID.me follows guidelines set by the National Institute of Standards and Technology (NIST) for identity verification, specifically adhering to Identity Assurance Level 2 (IAL2) as defined in NIST Special Publication 800-63A. IAL2 provides high confidence in the asserted identity's validity. Key aspects of IAL2 include:</p>
+                <ul>
+                    <li>Remote or in-person identity proofing</li>
+                    <li>Verification of government-issued photo ID</li>
+                    <li>Confirmation that identifying information is valid and current</li>
+                    <li>Verification of physical or biometric characteristics to the applicant's physical presence</li>
+                </ul>
+                <p>The ID.me verification process typically involves the following steps:</p>
+                <ol>
+                    <li>Create an ID.me account or sign in to an existing one.</li>
+                    <li>Provide basic information about yourself (e.g., name, date of birth, address).</li>
+                    <li>Upload images of your government-issued photo ID (e.g., driver's license or passport).</li>
+                    <li>Take a selfie for biometric verification, ensuring it matches the photo on your ID.</li>
+                    <li>Provide additional information for verification checks (e.g., Social Security Number).</li>
+                    <li>Set up multi-factor authentication for added security.</li>
+                </ol>
+                <p>To meet IAL2 requirements, ID.me performs several checks to verify your identity:</p>
+                <ul>
+                    <li>Identity verification document check: Ensures the government-issued ID is valid and matches provided information.</li>
+                    <li>Phone records check: Verifies the provided phone number is associated with your identity.</li>
+                    <li>Financial records check: Confirms the validity of provided financial information.</li>
+                </ul>
+                <p><strong>Important Note for This Demo:</strong> In this sandbox environment, these checks are simulated to demonstrate the IAL2 verification process. There is no need to provide real Personally Identifiable Information (PII). We strongly recommend entering fictitious data for the verification step. This allows you to experience the IAL2 verification process without risking any personal information.</p>
+                <p>Once verified in a real-world scenario, you can use your ID.me credential across multiple services without needing to reverify each time, as per NIST guidelines for federated identity systems. This demo, however, does not create a persistent credential.</p>
+            </details>
+            <details>
+                <summary>What if I can't verify my identity online?</summary>
+                <p>If you tried verifying your identity using Self-Service and weren't successful, you may have the option to finish verifying on a video call with a Video Chat Agent. Video Chat Agents, or Trusted Referees, are trained identity specialists employed by ID.me to verify your identity.</p>
+                <p>The video chat verification process typically involves:</p>
+                <ol>
+                    <li>Scheduling a video call with an ID.me Trusted Referee.</li>
+                    <li>Preparing necessary documents (e.g., government-issued ID, proof of address).</li>
+                    <li>Joining the video call at the scheduled time.</li>
+                    <li>Answering questions and showing your documents to the Trusted Referee.</li>
+                    <li>Completing any additional steps as guided by the Trusted Referee.</li>
+                </ol>
+                <p>This option ensures that even if the automated online process doesn't work for you, you still have a way to verify your identity and access the services you need.</p>
+                <p>Note: In a real implementation, you would be provided with specific instructions on how to schedule and prepare for a video chat if this option is available and necessary.</p>
+            </details>
+            <details>
+                <summary>How does this application integrate with ID.me?</summary>
+                <p>This application integrates with ID.me using OpenID Connect (OIDC), which is a secure authentication protocol built on top of OAuth 2.0. Here's how it works:</p>
+                <ol>
+                    <li>When you click the "Sign in with ID.me" button, the application initiates an OIDC flow.</li>
+                    <li>You're redirected to ID.me to authenticate and verify your identity.</li>
+                    <li>After successful verification, ID.me sends an authorization code back to this application.</li>
+                    <li>The application exchanges this code for ID tokens and access tokens.</li>
+                    <li>These tokens contain claims about your identity, which the application can use to grant access to protected resources.</li>
+                </ol>
+                <p>Key benefits of using OIDC include:</p>
+                <ul>
+                    <li>Single Sign-On (SSO) capabilities across multiple services</li>
+                    <li>Standardized, secure token-based authentication</li>
+                    <li>Ability to request specific identity claims based on the application's needs</li>
+                </ul>
+                <p><strong>Important Security Note:</strong> In a production environment, tokens would be sent as JWEs (JSON Web Encryption) to ensure encryption and security of the sensitive identity information they contain. This adds an extra layer of protection beyond the standard OIDC flow.</p>
+                <p>For this demo application, no actual OIDC flow or token exchange occurs. In a real implementation, proper security measures, including secure token handling and storage, would be crucial.</p>
+            </details>
+        </div>
+        <div class="more-info">
+            <p>For more information on ID.me, integration, and identity assurance levels:</p>
+            <ul>
+                <li><a href="https://developers.idmelabs.com/documentation/federated-protocols/oidc" target="_blank">OIDC integration with ID.me</a></li>
+                <li><a href="https://network.id.me/article/what-is-nist-ial2-identity-verification/" target="_blank">What is NIST IAL2 Identity Verification</a></li>
+                <li><a href="https://network.id.me/article/what-are-the-nist-800-63-digital-identity-guidelines/" target="_blank">NIST 800-63 Digital Identity Guidelines</a></li>
+                <li><a href="https://www.id.me/business/government" target="_blank">ID.me for Government</a></li>
+            </ul>
+        </div>
+    </section>
+</main>

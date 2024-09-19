@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
 using System.Net.Http;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,18 @@ builder.Services.AddAuthentication(options =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Token validated successfully");
+
+            if (context.Principal != null)
+            {
+                // Ensure claims are added to the user's identity
+                var claims = context.Principal.Claims.ToList();
+                context.Principal.AddIdentity(new ClaimsIdentity(claims, context.Scheme.Name));
+            }
+            else
+            {
+                logger.LogWarning("Principal is null in OnTokenValidated event");
+            }
+
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context =>
