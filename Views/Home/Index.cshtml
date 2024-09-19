@@ -40,7 +40,16 @@
 
                 @if (ViewBag.Claims == null)
                 {
-                    <div class="d-flex justify-content-center my-3">
+                    <div class="d-flex flex-column justify-content-center align-items-center my-3">
+                        <div class="card mb-3" style="max-width: 100%;">
+                            <div class="card-header">Important Notice</div>
+                            <div class="card-body">
+                                <h5 class="card-title">Please do not use real PII</h5>
+                                <p class="card-text">The sandbox is designed to let users through without needing to
+                                    input PII.</p>
+                            </div>
+                        </div>
+
                         <a asp-controller="Account" asp-action="Login">
                             <img src="https://developers.id.me/assets/buttons/rectangle-solid-sign-c1d3504ddef6e9f65531da61fb31addb58d43af739b4e735ece4d1a25667258b.svg"
                                 alt="Sign in" style="height: 50px;">
@@ -53,6 +62,7 @@
                         @if (ViewBag.Claims == null)
                         {
                             <div class="d-flex justify-content-center my-3">
+
                                 <a asp-controller="Account" asp-action="Login">
                                     <img src="https://developers.id.me/assets/buttons/rectangle-solid-sign-c1d3504ddef6e9f65531da61fb31addb58d43af739b4e735ece4d1a25667258b.svg"
                                         alt="Sign in" style="height: 50px;">
